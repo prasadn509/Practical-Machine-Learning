@@ -1,0 +1,97 @@
+## Human Activity Recognition: Predicting the manner of exercise
+
+## System Configuration:
+## Processor: Intel Core 2 Duo 2.66 GHz
+## RAM: 4GB
+## OS: Windows 7 Ultimate
+## Software:
+## IDE: RStudio
+## Programming Language: R
+## Version: 3.1.2
+## Used Packages:
+        ## 1. caret
+        ## 2. rpart
+        ## 3. randomForest
+        ## 4. ElemStatLearn
+## Classification Algorithm used: randomForest
+## Reasons for using randomForest:
+        ## 1. It runs efficiently on large data bases.
+        ## 2. It can handle thousands of input variables without variable deletion.
+        ## 3. It gives estimates of what variables are important in the classification.
+        ## 4. It generates an internal unbiased estimate of the generalization error as the forest building progresses. 
+## Seed: 509
+
+## Data Sources:
+## The training data for this project are available here:
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+## The test data are available here:
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+## Download the training as well as test data sets
+url_Training <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+url_testing <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+training <- read.csv(url(url_Training ), na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv(url(url_testing), na.strings=c("NA","#DIV/0!",""))
+
+## Load the required packages
+library(caret)
+library(rpart)
+library(randomForest)
+library(ElemStatLearn)
+
+## Set the seed to 509
+set.seed(509)
+
+## Partition the training data with 60% to training and remaining 40% to testing
+inTrain <- createDataPartition(y=training$classe, p=0.6, list=FALSE)
+data_Training<- training[inTrain, ];
+data_Testing <- training[-inTrain, ];
+
+## Check the columns without data if so remove the columns that have less than 70% of data filled.
+sum((colSums(!is.na(data_Training[,-ncol(data_Training)])) < 0.7*nrow(data_Training)))
+Keep <- c((colSums(!is.na(data_Training[,-ncol(data_Training)])) >= 0.7*nrow(data_Training)))
+data_Training   <-  data_Training[,Keep]
+data_Testing <- data_Testing[,Keep]
+
+## Use randomForest Machine Learning Algorithm to predict
+modFit_rf <- randomForest(classe ~. , data=data_Training)
+
+## Use the model to run on the 40% test data
+predictions_rf <- predict(modFit_rf, data_Testing, type = "class")
+
+## Analyse the results of selected Machine Learning Algorithm by confusionMatrix
+confusionMatrix(predictions_rf, data_Testing$classe)
+
+## Following are the statistics:
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 2232    0    0    0    0
+         B    0 1518    0    0    0
+         C    0    0 1368    0    0
+         D    0    0    0 1286    0
+         E    0    0    0    0 1442
+
+Overall Statistics
+                                     
+               Accuracy : 1          
+                 95% CI : (0.9995, 1)
+    No Information Rate : 0.2845     
+    P-Value [Acc > NIR] : < 2.2e-16  
+                                     
+                  Kappa : 1          
+ Mcnemar's Test P-Value : NA         
+
+Statistics by Class:
+
+                     Class: A Class: B Class: C Class: D Class: E
+Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
+Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
+Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+Detection Rate         0.2845   0.1935   0.1744   0.1639   0.1838
+Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
+Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000
